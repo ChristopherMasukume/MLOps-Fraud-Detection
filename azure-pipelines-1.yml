@@ -1,0 +1,53 @@
+trigger:
+- main
+
+schedules:
+- cron: "0 0 1 * *"  # This cron schedule triggers the pipeline on the 1st of every month at midnight
+  displayName: Monthly schedule
+  branches:
+    include:
+    - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
+    addToPath: true
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: 'Install dependencies'
+
+- script: |
+    ls -R
+    echo "Directory structure listed"
+  displayName: 'List directory structure'
+
+- script: |
+    cat simulate_data.py
+    echo "simulate_data.py content listed"
+  displayName: 'List simulate_data.py content'
+
+- script: |
+    python simulate_data.py
+  displayName: 'Simulate monthly data'
+
+- script: |
+    ls -R
+    echo "Directory structure listed after data simulation"
+  displayName: 'List directory structure after data simulation'
+
+- script: |
+    python train_log.py --data "C:/Fraud_Detection/simulated_data/creditcard_month_1.csv"
+  displayName: 'Train and log model'
+  
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: 'mlruns'
+    artifactName: 'mlruns'
+    publishLocation: 'Container'
+  displayName: 'Publish MLflow artifacts'
