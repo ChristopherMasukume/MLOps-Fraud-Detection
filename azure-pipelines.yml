@@ -2,12 +2,11 @@ trigger:
 - main
 
 schedules:
-- cron: "0 0 1 * *"
+- cron: "0 0 1 * *"  # This cron schedule triggers the pipeline on the 1st of every month at midnight
   displayName: Monthly schedule
   branches:
     include:
     - main
-  always: true
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -24,20 +23,16 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    python train_log.py --data "C:/Fraud_Detection/creditcard.csv"
-  displayName: 'Train model'
+    python simulate_data.py
+  displayName: 'Simulate monthly data'
 
-- task: PublishPipelineArtifact@1
+- script: |
+    python train_log.py --data "C:/Fraud_Detection/simulated_data/creditcard_month_1.csv"
+  displayName: 'Train and log model'
+  
+- task: PublishBuildArtifacts@1
   inputs:
-    targetPath: '$(Pipeline.Workspace)/mlruns'
+    pathtoPublish: 'mlruns'
     artifactName: 'mlruns'
+    publishLocation: 'Container'
   displayName: 'Publish MLflow artifacts'
-
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'YOUR_AZURE_SUBSCRIPTION'
-    scriptType: 'pscore'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      az ml model register -n LogisticRegressionModel --path $(Pipeline.Workspace)/mlruns --model-framework ScikitLearn --model-framework-version 0.24.1
-  displayName: 'Register model in Azure ML'
