@@ -23,8 +23,23 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
+    ls -R
+    echo "Directory structure listed"
+  displayName: 'List directory structure'
+
+- script: |
+    cat simulate_data.py
+    echo "simulate_data.py content listed"
+  displayName: 'List simulate_data.py content'
+
+- script: |
     python simulate_data.py
   displayName: 'Simulate monthly data'
+
+- script: |
+    ls -R
+    echo "Directory structure listed after data simulation"
+  displayName: 'List directory structure after data simulation'
 
 - script: |
     python train_log.py --data "C:/Fraud_Detection/simulated_data/creditcard_month_1.csv"
