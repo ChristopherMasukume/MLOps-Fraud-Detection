@@ -7,9 +7,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
+import schedule
+import time
 
 def main(data_path):
     print(f"Reading data from: {data_path}")
+    # Set the tracking URI to your MLflow server
+    mlflow.set_tracking_uri("http://127.0.0.1:5000")  # Replace with your MLflow tracking server URI
+
     # Load data
     try:
         data = pd.read_csv(data_path)
@@ -51,9 +56,9 @@ def main(data_path):
     print(f"Train Accuracy: {train_accuracy}")
     print(f"Test Accuracy: {test_accuracy}")
 
-if __name__ == "__main__":
+def job():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', type=str, help="Path to the training data")
+    parser.add_argument('--data', type=str, help="Path to the training data", required=True)
     args = parser.parse_args()
 
     # Print args.data for debugging
@@ -65,7 +70,16 @@ if __name__ == "__main__":
     else:
         main(args.data)
 
+if __name__ == "__main__":
+    # Schedule the job to run every 30 days
+    schedule.every(30).days.do(job)
 
+    # Run the scheduling loop
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
-#python train_log.py --data "C:/Fraud_Detection/creditcard.csv"
-
+# run:
+# mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000
+# then run:
+# c:/Fraud_Detection/Scripts/python.exe c:/Fraud_Detection/train_log.py --data "c:/Fraud_Detection/creditcard.csv"

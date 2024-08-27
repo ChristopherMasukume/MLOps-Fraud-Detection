@@ -103,5 +103,3 @@ def predict():
 if __name__ == '__main__':
     import os
     app.run(debug=os.environ.get('DEBUG', 'False') == 'True')
-
-# to access flasggar follow --- http://127.0.0.1:5000/apidocs/
