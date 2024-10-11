@@ -1,40 +1,10 @@
-trigger:
-- main
-
-pool:
-  vmImage: 'ubuntu-latest'
-
-variables:
-  VM_IMAGE: 'ubuntu-latest'
-  PYTHON_VERSION: '3.12'
-
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '$(PYTHON_VERSION)'
-  displayName: 'Set up Python $(PYTHON_VERSION)'
-
-- script: |
-    sudo apt-get update
-    sudo apt-get install -y python3-distutils
-  displayName: 'Install distutils'
-
-- script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-  displayName: 'Install dependencies'
-
-- script: |
-    python simulate_data.py
-  displayName: 'Simulate monthly data'
-
-- script: |
-    python train_log.py --data "C:/Fraud_Detection/creditcard.csv"
-  displayName: 'Train and log model'
-
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(Pipeline.Workspace)'
-    artifact: 'mlruns'
-    publishLocation: 'pipeline'
-  displayName: 'Publish mlruns artifact'
+jobs:
+- job: DeployModel
+  displayName: Deploy ML Model
+  pool:
+    name: MLOps Fraud Detection
+  steps:
+  - script: |
+      echo "Deploying the model"
+      # Add your model deployment commands here
+    displayName: 'Deploy Model'
