@@ -1,60 +1,29 @@
-trigger:
-  branches:
-    include:
-      - main  # Triggers on changes to the main branch
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
-pool:
-  vmImage: 'ubuntu-latest'
+trigger:
+- main
+
+resources:
+- repo: self
 
 variables:
-  # Container registry details
-  dockerRegistryServiceConnection: 'MyDockerRegistryServiceConnection' # Service connection to ACR or DockerHub
-  imageRepository: 'my-model-container'  # Name of the container repository
-  containerRegistry: 'myregistry.azurecr.io'  # Replace with your ACR or DockerHub registry URL
-  tag: '$(Build.BuildId)'  # Build ID as the image tag
+  tag: '$(Build.BuildId)'
 
-  # Kubernetes deployment variables
-  aksClusterResourceGroup: 'my-resource-group'  # Resource group containing AKS
-  aksClusterName: 'my-aks-cluster'  # Name of your AKS cluster
-  kubernetesNamespace: 'mlops'  # Namespace in AKS where model will be deployed
-  kubernetesServiceName: 'ml-model-service'  # Service name for your ML model in AKS
-
-steps:
-# Step 1: Checkout the code
-- checkout: self
-
-# Step 2: Build Docker Image
-- task: Docker@2
-  displayName: 'Build Docker Image'
-  inputs:
-    containerRegistry: $(dockerRegistryServiceConnection)
-    repository: $(imageRepository)
-    command: 'buildAndPush'
-    Dockerfile: 'Dockerfile'  # Path to your Dockerfile
-    tags: |
-      $(tag)
-
-# Step 3: Deploy to AKS
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'MyAzureServiceConnection'  # Azure service connection name
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      echo "Logging into Azure AKS"
-      az aks get-credentials --resource-group $(aksClusterResourceGroup) --name $(aksClusterName)
-      
-      echo "Deploying the model to AKS"
-      kubectl apply -f kubernetes-deployment.yaml -n $(kubernetesNamespace)
-    workingDirectory: $(System.DefaultWorkingDirectory)
-
-# Step 4: Expose the service (optional)
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'MyAzureServiceConnection'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      echo "Exposing the model service in AKS"
-      kubectl expose deployment $(kubernetesServiceName) --type=LoadBalancer --name=$(kubernetesServiceName) -n $(kubernetesNamespace)
-    workingDirectory: $(System.DefaultWorkingDirectory)
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: Docker@2
+      displayName: Build an image
+      inputs:
+        command: build
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile.yml'
+        tags: |
+          $(tag)
